@@ -18,7 +18,7 @@ RUN sed -i 's/\r//g' /opt/startup.relational.dev.sh
 RUN sed -i 's/\r//g' /opt/startup.production.sh
 
 WORKDIR /usr/src/app
-RUN if [ ! -f .env ]; then cp env-example-relational .env; fi
+RUN touch .env
 RUN npm run build
 
 CMD ["/opt/startup.production.sh"]
