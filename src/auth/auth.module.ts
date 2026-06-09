@@ -1,40 +1,31 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtModule } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
-import type { StringValue } from 'ms';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { JwtStrategy } from './jwt.strategy';
+import { PassportModule } from '@nestjs/passport';
+import { JwtModule } from '@nestjs/jwt';
+import { JwtStrategy } from './strategies/jwt.strategy';
+import { AnonymousStrategy } from './strategies/anonymous.strategy';
+import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
+import { MailModule } from '../mail/mail.module';
+import { SessionModule } from '../session/session.module';
+import { UsersModule } from '../users/users.module';
+import { AuthGoogleModule } from '../auth-google/auth-google.module';
+import { AuthFacebookModule } from '../auth-facebook/auth-facebook.module';
+import { AuthAppleModule } from '../auth-apple/auth-apple.module';
 
 @Module({
   imports: [
-    ConfigModule,
+    UsersModule,
+    SessionModule,
     PassportModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') ?? 'dev_secret',
-        signOptions: {
-          expiresIn: normalizeExpiresIn(
-            configService.get<string>('JWT_EXPIRES_IN') ?? '1d',
-          ),
-        },
-      }),
-    }),
+    MailModule,
+    JwtModule.register({}),
+    AuthGoogleModule,
+    AuthFacebookModule,
+    AuthAppleModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
-  exports: [JwtModule],
+  providers: [AuthService, JwtStrategy, JwtRefreshStrategy, AnonymousStrategy],
+  exports: [AuthService],
 })
 export class AuthModule {}
-
-function normalizeExpiresIn(value: string) {
-  const asNumber = Number(value);
-  if (Number.isFinite(asNumber)) {
-    return asNumber;
-  }
-
-  return value as StringValue;
-}
