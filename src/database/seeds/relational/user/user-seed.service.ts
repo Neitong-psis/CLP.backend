@@ -16,9 +16,8 @@ export class UserSeedService {
 
   async run() {
     const countAdmin = await this.repository.count({
-      where: {
-        email: 'admin@example.com',
-      },
+      where: { email: 'admin@example.com' },
+      withDeleted: true,
     });
 
     if (!countAdmin) {
@@ -42,9 +41,8 @@ export class UserSeedService {
     }
 
     const countLearner = await this.repository.count({
-      where: {
-        email: 'john.doe@example.com',
-      },
+      where: { email: 'john.doe@example.com' },
+      withDeleted: true,
     });
 
     if (!countLearner) {
@@ -68,9 +66,8 @@ export class UserSeedService {
     }
 
     const countEducator = await this.repository.count({
-      where: {
-        email: 'jane.smith@example.com',
-      },
+      where: { email: 'jane.smith@example.com' },
+      withDeleted: true,
     });
 
     if (!countEducator) {
