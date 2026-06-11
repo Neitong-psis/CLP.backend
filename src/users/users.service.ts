@@ -257,7 +257,7 @@ export class UsersService {
       // <updating-property-payload />
       firstName: updateUserDto.firstName ?? undefined,
       lastName: updateUserDto.lastName ?? undefined,
-      email: email ?? undefined,
+      email: email,
       passwordHash: password,
       photo,
       roles,

@@ -29,9 +29,10 @@ export class SessionRelationalRepository implements SessionRepository {
 
   async create(data: Session): Promise<Session> {
     const persistenceModel = SessionMapper.toPersistence(data);
-    return this.sessionRepository.save(
+    const entity = await this.sessionRepository.save(
       this.sessionRepository.create(persistenceModel),
     );
+    return SessionMapper.toDomain(entity);
   }
 
   async update(
@@ -89,6 +90,9 @@ export class SessionRelationalRepository implements SessionRepository {
   }
 
   async deleteByUserId(conditions: { userId: User['id'] }): Promise<void> {
+    if (conditions.userId == null) {
+      return;
+    }
     await this.sessionRepository.softDelete({
       user: {
         id: Number(conditions.userId),

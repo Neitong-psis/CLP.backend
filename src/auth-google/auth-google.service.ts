@@ -15,8 +15,8 @@ export class AuthGoogleService {
 
   constructor(private readonly configService: ConfigService<AllConfigType>) {
     this.google = new OAuth2Client(
-      configService.get('google.clientId', { infer: true }),
-      configService.get('google.clientSecret', { infer: true }),
+      configService.getOrThrow('google.clientId', { infer: true }),
+      configService.getOrThrow('google.clientSecret', { infer: true }),
     );
   }
 
