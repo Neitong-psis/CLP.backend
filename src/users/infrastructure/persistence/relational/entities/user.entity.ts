@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   ManyToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -23,7 +24,11 @@ export class UserEntity extends EntityRelationalHelper {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: String, unique: true, nullable: true })
+  // Partial unique index: only enforced on live rows, so a soft-deleted
+  // user's email frees up for re-registration. Matches migration
+  // UserEmailPartialUnique1781827200000.
+  @Index('UQ_user_email_active', { unique: true, where: '"deletedAt" IS NULL' })
+  @Column({ type: String, nullable: true })
   email: string | null;
 
   @Column({ type: String, name: 'password', nullable: true })

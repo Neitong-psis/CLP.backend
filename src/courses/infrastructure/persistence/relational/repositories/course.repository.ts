@@ -31,6 +31,7 @@ export class CourseRelationalRepository implements CourseRepository {
     const entities = await this.courseRepository.find({
       skip: (paginationOptions.page - 1) * paginationOptions.limit,
       take: paginationOptions.limit,
+      relations: ['instructor', 'category'],
     });
 
     return entities.map((entity) => CourseMapper.toDomain(entity));
@@ -39,6 +40,7 @@ export class CourseRelationalRepository implements CourseRepository {
   async findById(id: Course['id']): Promise<NullableType<Course>> {
     const entity = await this.courseRepository.findOne({
       where: { id },
+      relations: ['instructor', 'category'],
     });
 
     return entity ? CourseMapper.toDomain(entity) : null;
@@ -50,6 +52,7 @@ export class CourseRelationalRepository implements CourseRepository {
   ): Promise<Course | null> {
     const entity = await this.courseRepository.findOne({
       where: { id },
+      relations: ['instructor', 'category'],
     });
 
     if (!entity) {

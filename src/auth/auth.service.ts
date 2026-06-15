@@ -10,6 +10,7 @@ import ms from 'ms';
 import crypto from 'crypto';
 import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
 import { JwtService } from '@nestjs/jwt';
+import { QueryFailedError } from 'typeorm';
 import bcrypt from 'bcryptjs';
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
 import { AuthUpdateDto } from './dto/auth-update.dto';
@@ -235,16 +236,32 @@ export class AuthService {
       return existing;
     }
 
-    const user = await this.usersService.create({
-      ...dto,
-      email: dto.email,
-      roles: [
-        {
-          id: RoleEnum.learner,
-        },
-      ],
-      status: { id: StatusEnum.inactive },
-    });
+    let user: User;
+    try {
+      user = await this.usersService.create({
+        ...dto,
+        email: dto.email,
+        roles: [
+          {
+            id: RoleEnum.learner,
+          },
+        ],
+        status: { id: StatusEnum.inactive },
+      });
+    } catch (err) {
+      // Guards against soft-deleted rows (hidden from findByEmail but still
+      // counted by the unique index) and concurrent double-submits.
+      if (
+        err instanceof QueryFailedError &&
+        (err.driverError as { code?: string }).code === '23505'
+      ) {
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: { email: 'emailAlreadyExists' },
+        });
+      }
+      throw err;
+    }
 
     const hash = await this.jwtService.signAsync(
       {
