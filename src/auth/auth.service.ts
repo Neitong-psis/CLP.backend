@@ -1,6 +1,7 @@
 import {
   HttpStatus,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
   UnprocessableEntityException,
@@ -31,6 +32,7 @@ import { User } from '../users/domain/user';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   constructor(
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
@@ -203,6 +205,36 @@ export class AuthService {
   }
 
   async register(dto: AuthRegisterLoginDto): Promise<User> {
+    const existing = await this.usersService.findByEmail(dto.email);
+    if (existing) {
+      if (existing.status?.id === StatusEnum.active) {
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: { email: 'emailAlreadyExists' },
+        });
+      }
+      // Inactive / soft-deleted — re-send confirmation so they can activate
+      const hash = await this.jwtService.signAsync(
+        { confirmEmailUserId: existing.id },
+        {
+          secret: this.configService.getOrThrow('auth.confirmEmailSecret', {
+            infer: true,
+          }),
+          expiresIn: this.configService.getOrThrow('auth.confirmEmailExpires', {
+            infer: true,
+          }),
+        },
+      );
+      try {
+        await this.mailService.userSignUp({ to: dto.email, data: { hash } });
+      } catch (err) {
+        this.logger.warn(
+          `Failed to resend sign-up email to ${dto.email}: ${String(err)}`,
+        );
+      }
+      return existing;
+    }
+
     const user = await this.usersService.create({
       ...dto,
       email: dto.email,
@@ -228,12 +260,16 @@ export class AuthService {
       },
     );
 
-    await this.mailService.userSignUp({
-      to: dto.email,
-      data: {
-        hash,
-      },
-    });
+    try {
+      await this.mailService.userSignUp({
+        to: dto.email,
+        data: { hash },
+      });
+    } catch (err) {
+      this.logger.warn(
+        `Failed to send sign-up email to ${dto.email}: ${String(err)}`,
+      );
+    }
 
     return user;
   }
@@ -344,13 +380,16 @@ export class AuthService {
       },
     );
 
-    await this.mailService.forgotPassword({
-      to: email,
-      data: {
-        hash,
-        tokenExpires,
-      },
-    });
+    try {
+      await this.mailService.forgotPassword({
+        to: email,
+        data: { hash, tokenExpires },
+      });
+    } catch (err) {
+      this.logger.warn(
+        `Failed to send forgot-password email to ${email}: ${String(err)}`,
+      );
+    }
   }
 
   async resetPassword(hash: string, password: string): Promise<void> {
@@ -481,12 +520,16 @@ export class AuthService {
         },
       );
 
-      await this.mailService.confirmNewEmail({
-        to: userDto.email,
-        data: {
-          hash,
-        },
-      });
+      try {
+        await this.mailService.confirmNewEmail({
+          to: userDto.email,
+          data: { hash },
+        });
+      } catch (err) {
+        this.logger.warn(
+          `Failed to send confirm-new-email to ${userDto.email}: ${String(err)}`,
+        );
+      }
     }
 
     delete userDto.email;

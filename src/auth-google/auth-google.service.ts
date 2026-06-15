@@ -1,6 +1,7 @@
 import {
   HttpStatus,
   Injectable,
+  Logger,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -12,6 +13,7 @@ import { AllConfigType } from '../config/config.type';
 @Injectable()
 export class AuthGoogleService {
   private google: OAuth2Client;
+  private readonly logger = new Logger(AuthGoogleService.name);
 
   constructor(private readonly configService: ConfigService<AllConfigType>) {
     this.google = new OAuth2Client(
@@ -23,12 +25,20 @@ export class AuthGoogleService {
   async getProfileByToken(
     loginDto: AuthGoogleLoginDto,
   ): Promise<SocialInterface> {
-    const ticket = await this.google.verifyIdToken({
-      idToken: loginDto.idToken,
-      audience: [
-        this.configService.getOrThrow('google.clientId', { infer: true }),
-      ],
-    });
+    const ticket = await this.google
+      .verifyIdToken({
+        idToken: loginDto.idToken,
+        audience: [
+          this.configService.getOrThrow('google.clientId', { infer: true }),
+        ],
+      })
+      .catch((err: unknown) => {
+        this.logger.warn(`Google token verification failed: ${String(err)}`);
+        throw new UnprocessableEntityException({
+          status: HttpStatus.UNPROCESSABLE_ENTITY,
+          errors: { user: 'wrongToken' },
+        });
+      });
 
     const data = ticket.getPayload();
 
