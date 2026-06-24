@@ -442,14 +442,14 @@ export class AuthService {
       });
     }
 
-    const salt = await bcrypt.genSalt();
-    user.passwordHash = await bcrypt.hash(password, salt);
-
     await this.sessionService.deleteByUserId({
       userId: user.id,
     });
 
-    await this.usersService.update(user.id, user);
+    // Pass the plain password — usersService.update hashes it before persisting.
+    // Passing the domain User object (which has passwordHash, not password) would
+    // cause UpdateUserDto.password to be undefined and the hash to never be saved.
+    await this.usersService.update(user.id, { password });
   }
 
   async me(userJwtPayload: JwtPayloadType): Promise<NullableType<User>> {

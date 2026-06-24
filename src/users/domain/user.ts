@@ -9,6 +9,7 @@ export class User {
     type: Number,
     description: 'Unique identifier for each user (ID)',
   })
+  @Expose()
   id: number;
 
   @ApiProperty({
@@ -25,12 +26,14 @@ export class User {
     type: String,
     example: 'John',
   })
+  @Expose()
   firstName: string | null;
 
   @ApiProperty({
     type: String,
     example: 'Doe',
   })
+  @Expose()
   lastName: string | null;
 
   @ApiProperty({
