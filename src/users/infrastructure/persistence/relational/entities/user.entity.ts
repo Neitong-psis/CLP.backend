@@ -21,8 +21,8 @@ import { EntityRelationalHelper } from '../../../../../utils/relational-entity-h
   name: 'user',
 })
 export class UserEntity extends EntityRelationalHelper {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   // Partial unique index: only enforced on live rows, so a soft-deleted
   // user's email frees up for re-registration. Matches migration

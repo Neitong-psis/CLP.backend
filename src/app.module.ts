@@ -32,6 +32,8 @@ import { CoursesModule } from './courses/courses.module';
 import { FaqsModule } from './faqs/faqs.module';
 import { EnrollmentsModule } from './enrollments/enrollments.module';
 import { CertificatesModule } from './certificates/certificates.module';
+import { CertificateTemplatesModule } from './certificate-templates/certificate-templates.module';
+import { RevenueModule } from './revenue/revenue.module';
 
 // <database-block>
 const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig)
@@ -102,6 +104,8 @@ const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig)
     FaqsModule,
     EnrollmentsModule,
     CertificatesModule,
+    CertificateTemplatesModule,
+    RevenueModule,
   ],
 })
 export class AppModule {}

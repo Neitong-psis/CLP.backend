@@ -59,6 +59,26 @@ export class EnrollmentsService {
     };
   }
 
+  async findByStudent(studentId: string) {
+    return this.dataSource.query(
+      `SELECT 
+        e.enrollment_id as id,
+        e.status,
+        e.enrolled_at,
+        c.course_id as courseId,
+        c.title,
+        c.thumbnail,
+        c.subtitle,
+        c.level,
+        c.duration
+       FROM enrollments e
+       JOIN courses c ON e.course_id = c.course_id
+       WHERE e.student_id = $1
+       ORDER BY e.enrolled_at DESC`,
+      [studentId],
+    );
+  }
+
   async getAnalytics() {
     const analyticsData = await this.dataSource.query(
       `WITH months AS (

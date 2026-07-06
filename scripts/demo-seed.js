@@ -87,7 +87,7 @@ async function main() {
   console.log('── Roles ─────────────────────────────────────────────────────');
   for (const [name, id] of Object.entries(ROLES)) {
     await client.query(
-      `INSERT INTO "user_roles" (id, role_name) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+      `INSERT INTO "user_roles" (role_id, role_name) VALUES ($1, $2) ON CONFLICT (role_id) DO NOTHING`,
       [id, name.charAt(0).toUpperCase() + name.slice(1)]
     );
     console.log(`  ✔  ${name}`);
@@ -98,9 +98,11 @@ async function main() {
   const salt = await bcrypt.genSalt();
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, salt);
 
+  const STATUS_ID = { active: 1, inactive: 2 };
+
   for (const u of DEMO_USERS) {
     const { rows } = await client.query(
-      `SELECT id FROM "users" WHERE email = $1`,
+      `SELECT id FROM "user" WHERE email = $1`,
       [u.email]
     );
 
@@ -110,11 +112,11 @@ async function main() {
     }
 
     const { rows: inserted } = await client.query(
-      `INSERT INTO "users"
-         (email, first_name, last_name, password_hash, status, email_verified, provider)
-       VALUES ($1, $2, $3, $4, $5, false, 'email')
+      `INSERT INTO "user"
+         (email, "firstName", "lastName", password, "statusId", provider)
+       VALUES ($1, $2, $3, $4, $5, 'email')
        RETURNING id`,
-      [u.email, u.firstName, u.lastName, passwordHash, u.status]
+      [u.email, u.firstName, u.lastName, passwordHash, STATUS_ID[u.status]]
     );
 
     const userId = inserted[0].id;

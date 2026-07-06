@@ -2,8 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CourseEntity } from '../../../../courses/infrastructure/persistence/relational/entities/course.entity';
+import { CourseStatusEnum } from '../../../../courses/course-status.enum';
 import { UserEntity } from '../../../../users/infrastructure/persistence/relational/entities/user.entity';
 import { CategoryEntity } from '../../../../categories/infrastructure/persistence/relational/entities/category.entity';
+import { ModuleEntity } from '../../../../courses/infrastructure/persistence/relational/entities/module.entity';
+import { LessonEntity } from '../../../../courses/infrastructure/persistence/relational/entities/lesson.entity';
+import { QuizEntity } from '../../../../courses/infrastructure/persistence/relational/entities/quiz.entity';
+import { AssignmentEntity } from '../../../../courses/infrastructure/persistence/relational/entities/assignment.entity';
 
 @Injectable()
 export class CourseSeedService {
@@ -14,6 +19,14 @@ export class CourseSeedService {
     private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(CategoryEntity)
     private readonly categoryRepository: Repository<CategoryEntity>,
+    @InjectRepository(ModuleEntity)
+    private readonly moduleRepository: Repository<ModuleEntity>,
+    @InjectRepository(LessonEntity)
+    private readonly lessonRepository: Repository<LessonEntity>,
+    @InjectRepository(QuizEntity)
+    private readonly quizRepository: Repository<QuizEntity>,
+    @InjectRepository(AssignmentEntity)
+    private readonly assignmentRepository: Repository<AssignmentEntity>,
   ) {}
 
   async run() {
@@ -61,7 +74,7 @@ export class CourseSeedService {
         thumbnail:
           'https://images.unsplash.com/photo-1547082299-de196ea013d6?w=600&auto=format&fit=crop&q=60',
         category: frontendCat,
-        isPublished: true,
+        status: CourseStatusEnum.PUBLISHED,
         meta: {
           rating: 4.8,
           studentsCount: 234567,
@@ -164,7 +177,7 @@ export class CourseSeedService {
         thumbnail:
           'https://images.unsplash.com/photo-1677442136019-21780efad99a?w=600&auto=format&fit=crop&q=60',
         category: aiCat,
-        isPublished: true,
+        status: CourseStatusEnum.PUBLISHED,
         meta: {
           rating: 4.9,
           studentsCount: 18240,
@@ -267,7 +280,7 @@ export class CourseSeedService {
         thumbnail:
           'https://images.unsplash.com/photo-1561070791-26c113006238?w=600&auto=format&fit=crop&q=60',
         category: uiuxCat,
-        isPublished: true,
+        status: CourseStatusEnum.PUBLISHED,
         meta: {
           rating: 4.6,
           studentsCount: 98765,
@@ -370,7 +383,7 @@ export class CourseSeedService {
         thumbnail:
           'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&auto=format&fit=crop&q=60',
         category: javaCat,
-        isPublished: true,
+        status: CourseStatusEnum.PUBLISHED,
         meta: {
           rating: 4.7,
           studentsCount: 87432,
@@ -480,7 +493,7 @@ export class CourseSeedService {
         thumbnail:
           'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=600&auto=format&fit=crop&q=60',
         category: pythonCat,
-        isPublished: true,
+        status: CourseStatusEnum.PUBLISHED,
         meta: {
           rating: 4.8,
           studentsCount: 156789,
@@ -590,7 +603,7 @@ export class CourseSeedService {
         thumbnail:
           'https://images.unsplash.com/photo-1579468118864-1b9ea3c0db4a?w=600&auto=format&fit=crop&q=60',
         category: jsCat,
-        isPublished: true,
+        status: CourseStatusEnum.PUBLISHED,
         meta: {
           rating: 4.9,
           studentsCount: 203456,
@@ -700,7 +713,7 @@ export class CourseSeedService {
         thumbnail:
           'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=60',
         category: cssCat,
-        isPublished: true,
+        status: CourseStatusEnum.PUBLISHED,
         meta: {
           rating: 4.6,
           studentsCount: 45678,
@@ -803,7 +816,7 @@ export class CourseSeedService {
         thumbnail:
           'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&auto=format&fit=crop&q=60',
         category: awsCat,
-        isPublished: true,
+        status: CourseStatusEnum.PUBLISHED,
         meta: {
           rating: 4.8,
           studentsCount: 112345,
@@ -906,7 +919,7 @@ export class CourseSeedService {
         thumbnail:
           'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=600&auto=format&fit=crop&q=60',
         category: dbCat,
-        isPublished: true,
+        status: CourseStatusEnum.PUBLISHED,
         meta: {
           rating: 4.7,
           studentsCount: 67890,
@@ -1016,7 +1029,7 @@ export class CourseSeedService {
         thumbnail:
           'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&auto=format&fit=crop&q=60',
         category: graphicCat,
-        isPublished: true,
+        status: CourseStatusEnum.PUBLISHED,
         meta: {
           rating: 4.8,
           studentsCount: 34567,
@@ -1121,12 +1134,12 @@ export class CourseSeedService {
     ];
 
     for (const course of courses) {
-      const existing = await this.courseRepository.findOne({
+      let savedCourse = await this.courseRepository.findOne({
         where: { title: course.title },
       });
 
-      if (!existing) {
-        await this.courseRepository.save(
+      if (!savedCourse) {
+        savedCourse = await this.courseRepository.save(
           this.courseRepository.create({
             title: course.title,
             description: course.description,
@@ -1134,12 +1147,83 @@ export class CourseSeedService {
             thumbnail: course.thumbnail,
             category: course.category,
             instructor: instructor,
-            isPublished: course.isPublished,
+            status: course.status,
             meta: course.meta,
           }),
         );
-      } else if (!existing.meta?.sections) {
-        await this.courseRepository.save({ ...existing, meta: course.meta });
+      } else if (!savedCourse.meta?.sections) {
+        savedCourse.meta = course.meta;
+        savedCourse = await this.courseRepository.save(savedCourse);
+      }
+
+      // Populate relational tables (modules, lessons, quizzes, assignments)
+      const sections = course.meta?.sections || [];
+      for (let mIndex = 0; mIndex < sections.length; mIndex++) {
+        const section = sections[mIndex];
+
+        // Check if module already exists for this course and title
+        let moduleEntity = await this.moduleRepository.findOne({
+          where: { courseId: savedCourse.id, title: section.title },
+        });
+
+        if (!moduleEntity) {
+          moduleEntity = this.moduleRepository.create({
+            courseId: savedCourse.id,
+            title: section.title,
+            orderIndex: mIndex + 1,
+            isPublished: true,
+          });
+          moduleEntity = await this.moduleRepository.save(moduleEntity);
+        }
+
+        const lessons = section.lessons || [];
+        for (let lIndex = 0; lIndex < lessons.length; lIndex++) {
+          const lesson = lessons[lIndex];
+
+          // Check if lesson already exists for this module and title
+          let lessonEntity = await this.lessonRepository.findOne({
+            where: { moduleId: moduleEntity.id, title: lesson.title },
+          });
+
+          if (!lessonEntity) {
+            const sectionsJson = [
+              {
+                id: lesson.id,
+                title: lesson.title,
+                type: lesson.type || 'text',
+                videoId: lesson.videoId,
+                duration: lesson.duration,
+              },
+            ];
+
+            lessonEntity = this.lessonRepository.create({
+              moduleId: moduleEntity.id,
+              title: lesson.title,
+              orderIndex: lIndex + 1,
+              contentType: lesson.type || 'text',
+              content: JSON.stringify(sectionsJson),
+              videoDurationSeconds: lesson.type === 'video' ? 180 : 0,
+              isFree: false,
+            });
+            lessonEntity = await this.lessonRepository.save(lessonEntity);
+          }
+
+          // If type is quiz, seed a QuizEntity
+          if (lesson.type === 'quiz') {
+            const existingQuiz = await this.quizRepository.findOne({
+              where: { lessonId: lessonEntity.id },
+            });
+            if (!existingQuiz) {
+              await this.quizRepository.save(
+                this.quizRepository.create({
+                  lessonId: lessonEntity.id,
+                  title: lesson.title,
+                  passingScore: 60,
+                }),
+              );
+            }
+          }
+        }
       }
     }
   }

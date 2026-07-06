@@ -16,22 +16,22 @@ export class CategoryEntity extends EntityRelationalHelper {
   @PrimaryGeneratedColumn('uuid', { name: 'category_id' })
   id: string;
 
-  @Column({ type: String })
+  @Column({ type: String, length: 255 })
   name: string;
 
-  @Column({ type: String, unique: true })
+  @Column({ type: String, length: 255, unique: true })
   slug: string;
 
   @Column({ type: 'text', nullable: true })
   description?: string | null;
 
-  @Column({ type: String, nullable: true })
+  @Column({ type: String, length: 500, nullable: true })
   thumbnail?: string | null;
 
   @Column({ type: 'uuid', name: 'parent_category_id', nullable: true })
   parentCategoryId?: string | null;
 
-  @Column({ type: String, nullable: true })
+  @Column({ type: String, length: 500, nullable: true })
   path?: string | null;
 
   @Column({ type: 'integer', name: 'sort_order', default: 0 })
