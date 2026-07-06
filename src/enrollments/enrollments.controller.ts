@@ -4,6 +4,7 @@ import {
   UseGuards,
   HttpStatus,
   HttpCode,
+  Request,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -39,5 +40,12 @@ export class EnrollmentsController {
   })
   async getAnalytics() {
     return this.enrollmentsService.getAnalytics();
+  }
+
+  @Get('me')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard('jwt'))
+  async getMyEnrollments(@Request() request) {
+    return this.enrollmentsService.findByStudent(request.user.id);
   }
 }

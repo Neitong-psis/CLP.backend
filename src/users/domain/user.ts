@@ -6,11 +6,12 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class User {
   @ApiProperty({
-    type: Number,
+    type: String,
     description: 'Unique identifier for each user (ID)',
+    example: 'd3b07384-d113-4ec5-a58e-0123456789ab',
   })
   @Expose()
-  id: number;
+  id: string;
 
   @ApiProperty({
     type: String,

@@ -5,15 +5,22 @@ import {
   IsString,
   IsUUID,
   IsNumber,
-  IsBoolean,
   IsObject,
+  IsArray,
+  IsIn,
+  IsDateString,
+  IsEnum,
 } from 'class-validator';
+import { CourseStatusEnum } from '../course-status.enum';
 
 export class CreateCourseDto {
-  @ApiPropertyOptional({ example: 1 })
+  @ApiPropertyOptional({
+    type: String,
+    example: 'd3b07384-d113-4ec5-a58e-0123456789ab',
+  })
   @IsOptional()
-  @IsNumber()
-  instructorId?: number | null;
+  @IsUUID()
+  instructorId?: string | null;
 
   @ApiPropertyOptional({ type: String })
   @IsOptional()
@@ -47,13 +54,64 @@ export class CreateCourseDto {
   @IsString()
   thumbnail?: string | null;
 
-  @ApiPropertyOptional({ example: false, type: Boolean })
+  @ApiPropertyOptional({ example: 'intro-to-react', type: String })
   @IsOptional()
-  @IsBoolean()
-  isPublished?: boolean;
+  @IsString()
+  slug?: string | null;
+
+  @ApiPropertyOptional({
+    example: 'A beginner-friendly React course',
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  subtitle?: string | null;
+
+  @ApiPropertyOptional({
+    example: 'beginner',
+    enum: ['beginner', 'intermediate', 'advanced'],
+  })
+  @IsOptional()
+  @IsIn(['beginner', 'intermediate', 'advanced'])
+  level?: string | null;
+
+  @ApiPropertyOptional({ example: '12 hours', type: String })
+  @IsOptional()
+  @IsString()
+  duration?: string | null;
+
+  @ApiPropertyOptional({ example: ['react', 'typescript'], type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tags?: string[] | null;
 
   @ApiPropertyOptional({ type: Object })
   @IsOptional()
   @IsObject()
   meta?: Record<string, any> | null;
+
+  @ApiPropertyOptional({
+    enum: CourseStatusEnum,
+    example: CourseStatusEnum.TODO,
+  })
+  @IsOptional()
+  @IsEnum(CourseStatusEnum)
+  status?: CourseStatusEnum;
+  @ApiPropertyOptional({
+    type: String,
+    example: '2026-12-31',
+    description: 'ISO Date string for course due date',
+  })
+  @IsOptional()
+  @IsDateString()
+  dueDate?: string;
+  @ApiPropertyOptional({
+    type: String,
+    example: 'medium',
+    description: 'Priority of the course: low, medium, high, urgent',
+  })
+  @IsOptional()
+  @IsIn(['low', 'medium', 'high', 'urgent'])
+  priority?: string;
 }
